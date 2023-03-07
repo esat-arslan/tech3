@@ -1,0 +1,14 @@
+WITH median_daily_vaccinations AS (
+    SELECT country, COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY daily_vaccinations), 0) AS median_vaccinations
+    FROM vaccinations
+    WHERE daily_vaccinations IS NOT NULL
+    GROUP BY country
+)
+UPDATE vaccinations v
+SET daily_vaccinations = COALESCE(
+    (SELECT median_vaccinations
+     FROM median_daily_vaccinations m
+     WHERE m.country = v.country),
+    0
+)
+WHERE daily_vaccinations IS NULL;
